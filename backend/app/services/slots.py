@@ -1,36 +1,24 @@
-# app/services/slots.py
+from collections import defaultdict
+from datetime import datetime
 
-# Simulación de base de datos en memoria
-restaurants_slots = {
-    r_id: {
-        "18:00": 0,
-        "18:30": 0,
-        "19:00": 0,
-        "19:30": 0,
-        "20:00": 0,
-        "20:30": 0,
-        "21:00": 0,
-        "21:30": 0,
-    }
-    for r_id in range(1, 4)
-}
+# Estructura: {(rest_id, slot, date): total_guests}
+restaurants_slots = defaultdict(int)
 
-# Umbrales para determinar nivel de ocupación
+MAX_GUESTS_PER_SLOT = 15
+
 LEVEL_THRESHOLDS = {
     "low": 5,
     "medium": 10
 }
 
-
-def get_slots(restaurant_id: int):
-    """
-    Devuelve los slots del restaurante con nivel de ocupación.
-    """
-    if restaurant_id not in restaurants_slots:
-        return []
-
+def get_slots(restaurant_id: int, date: str):
     output = []
-    for time, count in restaurants_slots[restaurant_id].items():
+    hours = ["18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00", "21:30"]
+
+    for time in hours:
+        key = (restaurant_id, time, date)
+        count = restaurants_slots[key]
+
         if count < LEVEL_THRESHOLDS["low"]:
             level = "low"
         elif count < LEVEL_THRESHOLDS["medium"]:
@@ -41,24 +29,27 @@ def get_slots(restaurant_id: int):
         output.append({
             "time": time,
             "level": level,
-            "count": count  # Útil si quieres mostrar nº de reservas
+            "count": count
         })
     return output
 
 
-def reserve_slot(restaurant_id: int, slot_time: str):
-    """
-    Aumenta en 1 la reserva del slot correspondiente.
-    """
-    if restaurant_id in restaurants_slots and slot_time in restaurants_slots[restaurant_id]:
-        restaurants_slots[restaurant_id][slot_time] += 1
+def reserve_slot(restaurant_id: int, slot_time: str, date: str, guests: int, rooms: list[int]):
+    key = (restaurant_id, slot_time, date)
+    current = restaurants_slots[key]
+
+    if current + guests > MAX_GUESTS_PER_SLOT:
         return {
-            "status": "ok",
-            "reserved": slot_time,
-            "restaurant_id": restaurant_id
+            "status": "error",
+            "message": "Slot over capacity"
         }
 
+    restaurants_slots[key] += guests
     return {
-        "status": "error",
-        "message": "Invalid slot or restaurant"
+        "status": "ok",
+        "reserved": slot_time,
+        "restaurant_id": restaurant_id,
+        "date": date,
+        "guests": guests,
+        "rooms": rooms
     }
