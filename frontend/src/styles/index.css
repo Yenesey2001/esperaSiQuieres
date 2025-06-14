@@ -1,0 +1,18 @@
+@import "./variables.css";
+
+/* Reset base */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  background-color: var(--color-arena);
+  color: var(--color-negro);
+}
